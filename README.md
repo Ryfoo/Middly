@@ -8,17 +8,7 @@ external API responses get recorded the first time and replayed forever after
 Designed for development: fast iteration on code that calls paid or rate-limited
 APIs (OpenAI, Stripe, Anthropic, ...), reproducible test runs, offline work.
 
-```
-client → http://localhost:8080/openai/v1/chat/completions
-              │
-              ▼
-         ┌─────────┐  hash hit  ┌──────────┐
-         │  middly │ ─────────► │ SQLite   │ ──► cached response (sub-ms)
-         └─────────┘            └──────────┘
-              │ miss
-              ▼
-        api.openai.com  (response captured & cached on the way back)
-```
+![program architecture](assets/arch-1.png)
 
 ## Build & run
 
