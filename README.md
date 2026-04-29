@@ -1,3 +1,7 @@
+⚠️ WARNING: Pre-Alpha Status 
+Middly is currently under active development. The architecture is subject to change, and it is not yet ready for use in developer environments. Do not rely on it until the official release.
+
+
 # middly
 
 A single-binary caching reverse proxy for HTTP APIs. Run it locally, point your
@@ -5,46 +9,62 @@ SDKs at `http://localhost:8080/<service>/...` instead of the real origin, and
 external API responses get recorded the first time and replayed forever after
 — deterministically, including for `POST` bodies.
 
-Designed for development: fast iteration on code that calls paid or rate-limited
-APIs (OpenAI, Stripe, Anthropic, ...), reproducible test runs, offline work.
+it ensures:
+- **Saving Tokens and API Costs:** By caching repetitive requests to expensive upstreams (like LLM providers), Middly intercepts duplicate prompts during the iterative testing phase.
+
+- **Creating Deterministic Testing Environments:** Middly allows developers to replay cached responses, ensuring consistent and reproducible outputs. This removes network volatility, eliminates the burden of maintaining a live connection, and makes testing entirely predictable.
+
+- **Zero-Bloat, Drop-in Deployment:** Compiled as a single, statically linked binary with no CGO dependencies, Middly drops cleanly into any local workspace or CI pipeline across OS architectures without complex toolchain requirements or heavy installations.
 
 ![program architecture](assets/arch-1.png)
 
 ## Build & run
 
+### Installation
+
+1. Download and extract the latest release for your system.
+2. Move the executable to your system's PATH to run it globally:
+
+**Linux & macOS:**
+
 ```bash
-go build -o middly ./cmd
-./middly --port=8080 --db=cache.db --mode=record
+chmod +x middly
+sudo mv middly /usr/local/bin/
+```
+**Windows:**
+
+Move middly.exe to a dedicated folder (e.g., C:\Tools) and add that folder to your System Environment Variables.
+
+**Note:** macOS users may need to clear the quarantine flag: 
+```bash
+xattr -d com.apple.quarantine middly_darwin_arm64
 ```
 
 Pure-Go SQLite (`modernc.org/sqlite`) — no CGO, single static binary.
 
-Open the dashboard at <http://localhost:8080/dashboard>.
-
 ## Usage examples
 
-### Record-then-replay against OpenAI
 
+### Record-then-replay against OpenAI
 ```bash
-./middly --mode=record   # the default
+middly --routes='<path>=<upstream_url>' --mode=<mode_type> --db=<database_file>
+
+middly   # the default with (port:8080, db: cwd/cache.db, mode:record, routes: /openai, /anthropic,...)
 
 # Point your client at the proxy:
 export OPENAI_BASE_URL=http://localhost:8080/openai/v1
+export OPENAI_API_KEY=sk-* #if the API key is needed! 
+
 python my_script.py      # first run hits the real API and caches every call
 python my_script.py      # second run is fully offline, sub-ms per call
-```
 
-### Frozen test runs
+# Open the dashboard at <http://localhost:8080/dashboard>.
+```
+### Bypass & Replay
 
 ```bash
-./middly --mode=replay   # never touches the network; cache miss → 502
-go test ./...            # deterministic fixtures, no flakes from upstream
-```
-
-### Bypass the cache temporarily
-
-```bash
-./middly --mode=passthrough     # forwards every request, never reads/writes cache
+middly --mode=replay          # never forwards a request to the upstream, play everything locally.
+middly --mode=passthrough     # forwards every request, never reads/writes cache.
 ```
 
 ### CLI flags
@@ -93,12 +113,11 @@ METHOD\nNAMESPACE/path?sorted_query\nheader1: v\nheader2: v\nNORMALIZED_BODY
 
 then hashes it with SHA-256. The hash is **deterministic across**:
 
-- header order (lowercased, sorted, value lists sorted)
-- query parameter order (URL-encoded, sorted)
-- JSON object key order — recursively
-- noisy/hop-by-hop headers (`Host`, `User-Agent`, `Accept-Encoding`, …) which
-  are skipped by default
-- common cache-buster query params (`_`, `_t`, `timestamp`)
+- header order.
+- query parameter order.
+- JSON object key order — recursively.
+- noisy/hop-by-hop headers.
+- common cache-buster query params.
 
 The `Authorization` header is **excluded by default** so a cache produced by
 one developer can be replayed by another. Pass `--include-auth` if your
@@ -149,21 +168,10 @@ cache stores only the decoded body and lets `net/http` re-encode on replay.
 single HTML template and HTMX from a CDN. Includes a `clear cache` button
 (POST `/dashboard/clear`).
 
-## Performance
-
-A local smoke test on this machine (proxy + Python upstream on loopback):
-
-- **cache-hit latency** ~0.3–0.7 ms end-to-end via `curl` (sub-millisecond
-  proxy overhead — the rest is curl + loopback TCP)
-- **200 concurrent hits** via `xargs -P 50` → 200/200 OK, no errors
-
-Numbers will vary, but the design (atomic counters, WAL SQLite, no global
-locks in the hot path, async cache writes) should hold up well under
-realistic load.
-
 ## Tests
 
 ```bash
+middly --port=8080 --mode=replay
 go test ./...
 ```
 
