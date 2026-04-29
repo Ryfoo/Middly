@@ -3,6 +3,7 @@ package dashboard
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -12,6 +13,9 @@ import (
 	"middly/cache"
 	"middly/proxy"
 )
+
+//go:embed static/htmx.min.js
+var htmxJS []byte
 
 // Dashboard exposes /dashboard, /dashboard/stats, /dashboard/recent and
 // /dashboard/clear (POST).
@@ -38,6 +42,13 @@ func (d *Dashboard) Mount(mux *http.ServeMux) {
 	mux.HandleFunc("/dashboard/recent", d.handleRecent)
 	mux.HandleFunc("/dashboard/clear", d.handleClear)
 	mux.HandleFunc("/dashboard/mode", d.handleMode)
+	mux.HandleFunc("/dashboard/htmx.js", d.handleHTMX)
+}
+
+func (d *Dashboard) handleHTMX(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+	_, _ = w.Write(htmxJS)
 }
 
 type indexData struct {

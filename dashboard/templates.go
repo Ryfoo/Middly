@@ -5,7 +5,7 @@ const layoutHTML = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <title>middly · cache dashboard</title>
-<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+<script src="/dashboard/htmx.js"></script>
 <style>
   :root {
     --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
