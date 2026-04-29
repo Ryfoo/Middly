@@ -26,6 +26,7 @@ var defaultRoutes = map[string]string{
 	"/openai":    "https://api.openai.com",
 	"/stripe":    "https://api.stripe.com",
 	"/anthropic": "https://api.anthropic.com",
+	"/deepseek":  "https://api.deepseek.com",
 	"/weather":   "https://api.weather.com",
 }
 
