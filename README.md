@@ -94,6 +94,8 @@ middly --mode=passthrough     # forwards every request, never reads/writes cache
 Add or override with `--routes='/foo=https://example.com,/bar=https://other'`.
 
 ## Performance
+<pre style="overflow-x: auto; font-family: monospace;">
+<code>
 
 +----------------------+--------+----------------------+----------------------+----------------------+----------------------+----------------------+----------------------+----------------------+
 | request              | status | time (without mid)   | time (with mid)      | cost (without mid)   | cost (with mid)      | in (without / with)  | out (without / with) | tokens (without/with)|
@@ -109,6 +111,9 @@ Add or override with `--routes='/foo=https://example.com,/bar=https://other'`.
 +----------------------+--------+----------------------+----------------------+----------------------+----------------------+----------------------+----------------------+----------------------+
 | TOTAL                | —      | 253.66s              | 68ms                 | $0.0166              | $0                   | 555 / 0              | 14951 / 0            | 15506 / 0            |
 +----------------------+--------+----------------------+----------------------+----------------------+----------------------+----------------------+----------------------+----------------------+
+
+</code>
+</pre>
 
 ## Architecture
 
